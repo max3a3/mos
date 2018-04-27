@@ -1,3 +1,6 @@
+# IFT6135H18 Class project. This code is forked from its original repo. Some modifications are made into it 
+# to satisfy our project needs.
+
 # Breaking the Softmax Bottleneck: A High-Rank Language Model
 
 This is the code we used in our paper
