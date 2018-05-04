@@ -1,5 +1,6 @@
 # IFT6135H18 Class project. This code is forked from its original repo. Some modifications are made into it 
-# to satisfy our project needs.
+# to satisfy our project needs. Most results are here, some scripts won't run because the required folders
+# (saved models) are not uploaded to Git because of space
 
 # Breaking the Softmax Bottleneck: A High-Rank Language Model
 

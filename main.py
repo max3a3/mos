@@ -80,6 +80,8 @@ parser.add_argument('--max_seq_len_delta', type=int, default=40,
                     help='max sequence length')
 parser.add_argument('--single_gpu', default=False, action='store_true', 
                     help='use single GPU')
+parser.add_argument('--moc', default=False, action='store_true',
+                    help='use MoC instead of MoS')
 args = parser.parse_args()
 
 if args.nhidlast < 0:
@@ -90,7 +92,7 @@ if args.small_batch_size < 0:
     args.small_batch_size = args.batch_size
 
 if not args.continue_train:
-    args.save = '{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+    args.save = '{}-{}'.format(args.save + ('MOC' if args.moc else ''), time.strftime("%Y%m%d-%H%M%S"))
     create_exp_dir(args.save, scripts_to_save=['main.py', 'model.py'])
 
 def logging(s, print_=True, log_=True):
@@ -127,11 +129,16 @@ test_data = batchify(corpus.test, test_batch_size, args)
 
 ntokens = len(corpus.dictionary)
 if args.continue_train:
-    model = torch.load(os.path.join(args.save, 'model.pt'))
+    model = torch.load(os.path.join(args.save + ('MOC' if args.moc else ''), 'model.pt'.format(args.n_experts)))
 else:
-    model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nhidlast, args.nlayers, 
-                       args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop, 
-                       args.tied, args.dropoutl, args.n_experts)
+    if not args.moc:
+        model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nhidlast, args.nlayers,
+                               args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop,
+                               args.tied, args.dropoutl, args.n_experts)
+    else:
+        model = model.RNNModelMoC(args.model, ntokens, args.emsize, args.nhid, args.nhidlast, args.nlayers,
+                                  args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop,
+                                  args.tied, args.dropoutl, args.n_experts)
 
 if args.cuda:
     if args.single_gpu:
