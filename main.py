@@ -65,7 +65,7 @@ parser.add_argument('--save', type=str,  default='EXP',
 parser.add_argument('--alpha', type=float, default=2,
                     help='alpha L2 regularization on RNN activation (alpha = 0 means no regularization)')
 parser.add_argument('--beta', type=float, default=1,
-                    help='beta slowness regularization applied on RNN activiation (beta = 0 means no regularization)')
+                    help='beta slowness regularization applied on RNN activation (beta = 0 means no regularization)')
 parser.add_argument('--wdecay', type=float, default=1.2e-6,
                     help='weight decay applied to all weights')
 parser.add_argument('--continue_train', action='store_true',
@@ -82,8 +82,10 @@ parser.add_argument('--single_gpu', default=False, action='store_true',
                     help='use single GPU')
 parser.add_argument('--moc', default=False, action='store_true',
                     help='use MoC instead of MoS')
+parser.add_argument('--underflow', default=True, action='store_false',
+                    help='adding 1e-8 before taking the log probabilities to handle underflow in MOS.\
+                          seems like a big deal for rank evaluation')
 args = parser.parse_args()
-
 if args.nhidlast < 0:
     args.nhidlast = args.emsize
 if args.dropoutl < 0:
@@ -92,7 +94,8 @@ if args.small_batch_size < 0:
     args.small_batch_size = args.batch_size
 
 if not args.continue_train:
-    args.save = '{}-{}'.format(args.save + ('MOC' if args.moc else ''), time.strftime("%Y%m%d-%H%M%S"))
+    args.save = '{}-{}'.format(args.save + ('MOC' if args.moc else '') + ('no_uf' if not args.underflow else ''),
+                               time.strftime("%Y%m%d-%H%M%S"))
     create_exp_dir(args.save, scripts_to_save=['main.py', 'model.py'])
 
 def logging(s, print_=True, log_=True):
@@ -134,7 +137,7 @@ else:
     if not args.moc:
         model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nhidlast, args.nlayers,
                                args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop,
-                               args.tied, args.dropoutl, args.n_experts)
+                               args.tied, args.dropoutl, args.n_experts, args.underflow)
     else:
         model = model.RNNModelMoC(args.model, ntokens, args.emsize, args.nhid, args.nhidlast, args.nlayers,
                                   args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop,

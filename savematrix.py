@@ -23,6 +23,9 @@ parser.add_argument('--tosave_dir', type=str, default='/data/milatmp1/lahlosal',
                     help='where to save the matrix')
 parser.add_argument('--type', type=str, default='MoS',
                     help='MoS or MoC')
+parser.add_argument('--underflow', default=True, action='store_false',
+                    help='adding 1e-8 before taking the log probabilities to handle underflow in MOS.\
+                          seems like a big deal for rank evaluation')
 args = parser.parse_args()
 
 model = torch.load(args.savedir +'/model.pt')
@@ -77,4 +80,4 @@ print('Perplexity on test set with {} experts {}: {}'.format(perplexity, args.n_
 mat = torch.cat([mat.cpu().view(-1, 10000) for mat in log_probs])
 mat = mat.data.numpy()
 
-np.save(args.tosave_dir + '/{}_{}.npy'.format(args.type, args.n_experts), mat)
+np.save(args.tosave_dir + '/{}_{}{}.npy'.format(args.type, args.n_experts, '' if args.underflow else "no_uf"), mat)

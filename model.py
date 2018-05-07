@@ -13,7 +13,7 @@ class RNNModel(nn.Module):
 
     def __init__(self, rnn_type, ntoken, ninp, nhid, nhidlast, nlayers, 
                  dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0, 
-                 tie_weights=False, ldropout=0.5, n_experts=10):
+                 tie_weights=False, ldropout=0.5, n_experts=10, underflow=True):
         super(RNNModel, self).__init__()
         self.lockdrop = LockedDropout()
         self.encoder = nn.Embedding(ntoken, ninp)
@@ -53,6 +53,7 @@ class RNNModel(nn.Module):
         self.dropoutl = ldropout
         self.n_experts = n_experts
         self.ntoken = ntoken
+        self.underflow = underflow
 
         size = 0
         for p in self.parameters():
@@ -105,7 +106,10 @@ class RNNModel(nn.Module):
         if return_prob:
             model_output = prob
         else:
-            log_prob = torch.log(prob.add_(1e-8))
+            if self.underflow:
+                log_prob = torch.log(prob.add_(1e-8))
+            else:
+                log_prob = torch.log(prob)
             model_output = log_prob
 
         model_output = model_output.view(-1, batch_size, self.ntoken)
